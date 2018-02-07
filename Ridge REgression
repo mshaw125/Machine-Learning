@@ -1,0 +1,51 @@
+import numpy as np
+import numpy.linalg as nlg
+
+#adding a column of ones
+ones = np.ones(len(data2))
+data2 = np.column_stack([data2, ones])
+
+#predicts outputs and calculates SSE
+def predictor (X,Y, theta):
+    predictions = X.dot(theta)
+    e = Y - predictions
+    SSE = np.dot(e, e)
+    
+    return predictions, SSE
+
+#returns a theta based on ridge normal equation
+def rr (X, Y, Lambda):
+    theta = nlg.inv(np.dot(X.T, X) + Lambda*np.eye(X.shape[1])).dot(X.T).dot(Y)
+    
+    return theta
+		
+#cross validates with training and testing data
+def cross_val (k, data , Lambda):
+    n = len(data2)
+    SSE_train = []; SSE_test = []
+    
+    for i in xrange(k):
+        start = (n*i)/k
+        end = (n*(i+1))/k
+        
+        test = data2[start:end]
+        train = np.vstack([data2[0:start], data2[end:n]])
+        
+        theta = rr(train[:, 1:], train[:, 0], Lambda)
+        sse_train = rrpredictor(train[:, 1:], train[:, 0], theta)[1]
+        sse_test = rrpredictor(test[:, 1:], test[:, 0], theta)[1]
+        
+        SSE_train.append(sse_train)
+        SSE_test.append(sse_test)
+        
+    return np.mean(SSE_train), np.mean(SSE_test) 
+		
+SSE_train=[]; SSE_test=[]
+Lambda = range(0, 1001, 25)
+
+#finds the est lambda based on low SSE
+for l in Lambda:
+    sse_train, sse_test = rr_cross_val(2, train, l)
+    SSE_train.append(sse_train); SSE_test.append(sse_test)
+print "The best choice of lambda is:", Lambda[np.argmin(SSE_test)]
+print "SSE:", min(SSE_test)
