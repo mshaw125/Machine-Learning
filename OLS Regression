@@ -32,3 +32,30 @@ def polyfit (X, Y, degree):
     MSE = predictor(X, Y, theta, degree)[1]
     
     return theta, MSE
+
+#cross validates training and testing data, returning mean MSE
+def cross_val (k, data, degree):
+    n = len(data)
+    MSE = []
+    
+    for i in xrange(k):
+        start = (n*i)/k
+        end = (n*(i+1))/k
+        
+        val = data[start:end]
+        train = np.vstack([data[0:start], data[end:n]])
+        
+        theta = polyfit(train[:, 0], train[:, 1], degree)[0]
+        mse = predictor(val[:, 0], val[:, 1], theta, degree)[1]
+        
+        MSE.append(mse)
+        
+    return np.mean(MSE)
+    
+#finds the best degree polynomial to fit based on MSE
+MSE = []
+for degree in xrange (1, 16):
+    mse = cross_val(2, train, degree)
+    MSE.append(mse)
+print "The best choice of degree is:", MSE.index(min(MSE))+1
+print "MSE:", min(MSE)
