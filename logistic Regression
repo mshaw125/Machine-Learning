@@ -1,0 +1,41 @@
+import numpy as np
+import numpy.linalg as nlg
+
+#predicting output based on a linking function
+def log_predictor(X, theta):
+    predictions = 1/(1+np.exp(-np.dot(X, theta)))
+    
+    return predictions
+
+#claculates the loss of the log-likelihood
+def loss_function (X, Y, theta):
+    predictions = log_predictor(X, theta)
+    loss = np.mean((Y-1)*np.log(1-predictions) - Y * np.log(predictions))
+    
+    return loss
+		
+#performs losfistic regression using gradient descent on loss function		
+def log_reg_grad (X, Y, step_size, tolerance):
+    converged = False
+    theta = np.zeros(X.shape[1])
+    loss = [loss_function(X, Y, theta)]
+    
+    while not converged:
+        predictions = log_predictor(X, theta)
+        
+        gradient = np.dot(predictions - Y, X)
+        theta = theta - step_size*gradient
+        
+        loss.append(loss_function(X, Y, theta))
+        
+        if abs(loss[-1]-loss[-2]) < tolerance:
+            converged = True
+    
+    return theta, loss
+		
+#calculates theta baed on training and testing data
+p = int(len(data))
+train, test = data[:p], data[p:]
+theta, loss = log_reg_grad(train[:,0:3], train[:, 3], 0.01, 0.0001)
+print theta
+print 'The loss function =', loss[-1]
