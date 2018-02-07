@@ -21,7 +21,7 @@ def rr (X, Y, Lambda):
 		
 #cross validates with training and testing data
 def cross_val (k, data , Lambda):
-    n = len(data2)
+    n = len(data)
     SSE_train = []; SSE_test = []
     
     for i in xrange(k):
@@ -29,7 +29,7 @@ def cross_val (k, data , Lambda):
         end = (n*(i+1))/k
         
         test = data2[start:end]
-        train = np.vstack([data2[0:start], data2[end:n]])
+        train = np.vstack([data[0:start], data[end:n]])
         
         theta = rr(train[:, 1:], train[:, 0], Lambda)
         sse_train = rrpredictor(train[:, 1:], train[:, 0], theta)[1]
