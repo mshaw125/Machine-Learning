@@ -1,0 +1,34 @@
+import numpy as np
+import numpy.linalg as nlg
+
+#creates the polynomial we are working with
+def Poly (x, degree):
+    #making a column of ones
+    p = np.ones(len(x))
+    p = np.column_stack([p, x])
+    
+    #adding the polynomial
+    for i in xrange(2, degree+1):
+        p = np.column_stack([p, np.power(x, i)])
+        
+    return p
+   
+#predicts the output based on the normal equation and returns it with the MSE
+def predictor (X, Y, theta, degree):
+    p = Poly(X, degree)
+    
+    predict = p.dot(theta)
+    e = Y - predict
+    MSE = np.mean(e**2)
+    
+    return predict, MSE
+
+#finds and returns the theta with the smallest MSE
+def polyfit (X, Y, degree):
+    p = Poly(X, degree)
+    
+    theta = nlg.inv(np.dot(p.T, p)).dot(p.T).dot(Y)
+    
+    MSE = predictor(X, Y, theta, degree)[1]
+    
+    return theta, MSE
