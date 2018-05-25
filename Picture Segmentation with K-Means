@@ -1,0 +1,93 @@
+import numpy as np
+%matplotlib inline
+import matplotlib.pyplot as plt
+from scipy.misc import imread
+import tensorflow as tf
+from tkinter.filedialog import askopenfilename
+
+
+#creating a kmeans function using tensorflow
+def kmeans(data, K = 3, Maxiter = 1000):
+    
+    N,D = data.shape
+    
+    tf.reset_default_graph()
+    
+    points = tf.placeholder(tf.float32, [N,D], name ='input')
+    cluster_assignments = tf.Variable(tf.zeros([N], dtype = tf.int64))
+    centroids = tf.Variable(tf.random_normal([K,D]))
+    
+    rep_centroids = tf.reshape(tf.tile(centroids, [N,1]),[N, K, D])
+    rep_points = tf.reshape(tf.tile(points, [1,K]), [N,K,D])
+    sum_squares = tf.reduce_sum(tf.square(rep_points - rep_centroids),
+                                reduction_indices=2)
+
+    
+    new_centroids = tf.argmin(sum_squares, 1)
+    did_assignments_change = tf.reduce_any(tf.not_equal(new_centroids,
+                                                       cluster_assignments))
+    
+    def bucket_mean(data, bucket_ids, num_buckets):
+        total = tf.unsorted_segment_sum(data, bucket_ids, num_buckets)
+        count = tf.unsorted_segment_sum(tf.ones_like(data),bucket_ids, num_buckets)
+        count = tf.where(tf.equal(count, tf.zeros_like(count)),tf.ones_like(count), count)
+        return total / count
+    means = bucket_mean(points, new_centroids, K)
+    
+    with tf.control_dependencies([did_assignments_change]):
+        do_updates = tf.group(
+            centroids.assign(means),
+            cluster_assignments.assign(new_centroids))
+    
+    init = tf.global_variables_initializer()
+    
+    with tf.Session() as sess:
+        sess.run(init)
+        changed = True
+        iters = 0
+        while changed and iters < Maxiter:
+            iters += 1
+            [changed, _] = sess.run([did_assignments_change, do_updates], feed_dict = {points:data})   
+        [centers, assignments] = sess.run([centroids, cluster_assignments], feed_dict = {points:data})
+    
+    return iters, centers, assignments
+    
+    
+#upoading image, fitting pixels to sample matrix, and running multiple kmeans of various Ks
+filename = askopenfilename()
+image = imread(filename)
+
+red, green, blue = image[:,:,0], image[:,:,1], image[:,:,2]
+w, h = image[:,:,:3].shape[0],image[:,:,:3].shape[1]
+samples = np.column_stack([red.flatten(),green.flatten(), blue.flatten()])
+#image_points = np.reshape(image, (image.shape[0]*image.shape[1], -1))
+_2, colors2, assignments2 = kmeans(samples, K=2)
+_3, colors3, assignments3 = kmeans(samples, K=3)
+_4, colors4, assignments4 = kmeans(samples, K=4)
+_5, colors5, assignments5 = kmeans(samples, K=5)
+_6, colors6, assignments6 = kmeans(samples, K=6)
+
+
+
+
+#multiple segmentations and plotting of the different Ks
+seg2 = np.reshape(colors2[assignments2,:].astype('uint8'), image.shape)
+seg3 = np.reshape(colors3[assignments3,:].astype('uint8'), image.shape)
+seg4 = np.reshape(colors4[assignments4,:].astype('uint8'), image.shape)
+seg5 = np.reshape(colors5[assignments5,:].astype('uint8'), image.shape)
+seg6 = np.reshape(colors6[assignments6,:].astype('uint8'), image.shape)
+
+
+f, axarr = plt.subplots(3,2, figsize=(15,30))
+axarr[0,0].imshow(image)
+axarr[0,0].set_title('Original Image')
+axarr[0,1].imshow(seg2)
+axarr[0,1].set_title('K = 2')
+axarr[1,0].imshow(seg3)
+axarr[1,0].set_title('K = 3')
+axarr[1,1].imshow(seg4)
+axarr[1,1].set_title('K = 4')
+axarr[2,0].imshow(seg5)
+axarr[2,0].set_title('K = 5')
+axarr[2,1].imshow(seg6)
+axarr[2,1].set_title('K = 6')
